@@ -1,0 +1,82 @@
+import re
+
+def to_pascal_case(name: str, exceptions=None, preserve_acronym_case=True) -> str:
+    """
+    Convert a column name to PascalCase.
+
+    This function handles various formats such as snake_case, kebab-case, 
+    camelCase, PascalCase, and names with dots or spaces.
+
+    Parameters:
+    ----------
+    name : str
+        The original column name.
+    exceptions : list of str, optional
+        List of acronyms or terms (e.g., ['ID', 'SKU']) that should be treated specially.
+    preserve_acronym_case : bool, default=True
+        If True, exceptions will remain uppercase (e.g., 'SKU'), 
+        otherwise they will be capitalized like 'Sku'.
+
+    Returns:
+    -------
+    str
+        The column name converted to PascalCase.
+    """
+    if exceptions is None:
+        exceptions = []
+
+    name = re.sub(r"[.\-_\s]+", " ", name)
+    words = re.split(r"\s+", name.strip())
+
+    result = []
+    for word in words:
+        if not word:
+            continue
+        if word.upper() in exceptions:
+            result.append(word.upper() if preserve_acronym_case else word.capitalize())
+        else:
+            result.append(word.capitalize())
+
+    return ''.join(result)
+
+def to_snake_case(name: str, exceptions=None, preserve_acronym_case=True) -> str:
+    """
+    Convert a column name to snake_case.
+
+    This function handles various formats such as camelCase, PascalCase, kebab-case, 
+    names with dots, spaces, or underscores. It ensures consistent casing and delimiter.
+
+    Parameters:
+    ----------
+    name : str
+        The original column name.
+    exceptions : list of str, optional
+        List of acronyms or terms (e.g., ['ID', 'SKU']) that should be treated specially.
+    preserve_acronym_case : bool, default=True
+        If True, exceptions will remain uppercase (e.g., 'SKU'),
+        otherwise they will be converted to lowercase ('sku').
+
+    Returns:
+    -------
+    str
+        The column name converted to snake_case.
+    """
+    if exceptions is None:
+        exceptions = []
+
+    name = re.sub(r"[.\-_\s]+", " ", name)
+    name = re.sub(r"([a-z0-9])([A-Z])", r"\1 \2", name)
+
+    words = re.split(r"\s+", name.strip())
+
+    result = []
+    for word in words:
+        if not word:
+            continue
+        if word.upper() in exceptions:
+            cleaned = word.upper() if preserve_acronym_case else word.lower()
+            result.append(cleaned)
+        else:
+            result.append(word.lower())
+
+    return "_".join(result)
