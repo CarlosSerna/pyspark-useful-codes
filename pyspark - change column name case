@@ -1,30 +1,35 @@
 import re
 
+import re
+
 def to_pascal_case(name: str, exceptions=None, preserve_acronym_case=True) -> str:
     """
-    Convert a column name to PascalCase.
+    Converts a string to PascalCase while preserving:
+    - Acronyms like 'ID', 'SKU' if included in `exceptions`
+    - Words that are already in PascalCase
 
-    This function handles various formats such as snake_case, kebab-case, 
-    camelCase, PascalCase, and names with dots or spaces.
-
-    Parameters:
+    Parameters
     ----------
     name : str
-        The original column name.
+        Original column name
     exceptions : list of str, optional
-        List of acronyms or terms (e.g., ['ID', 'SKU']) that should be treated specially.
+        List of acronyms to preserve (e.g., ['ID', 'SKU'])
     preserve_acronym_case : bool, default=True
-        If True, exceptions will remain uppercase (e.g., 'SKU'), 
-        otherwise they will be capitalized like 'Sku'.
+        Whether acronyms should remain uppercase
 
-    Returns:
+    Returns
     -------
     str
-        The column name converted to PascalCase.
+        PascalCase column name
     """
     if exceptions is None:
         exceptions = []
 
+    # Check if it's already PascalCase and all acronyms are intact
+    if re.fullmatch(r"[A-Z][a-zA-Z0-9]*", name) and not any(sep in name for sep in ['_', '-', '.', ' ']):
+        return name  # Already looks good
+
+    # Normalize separators to space
     name = re.sub(r"[.\-_\s]+", " ", name)
     words = re.split(r"\s+", name.strip())
 
