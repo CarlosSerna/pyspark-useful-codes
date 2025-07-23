@@ -90,27 +90,22 @@ def to_snake_case(name: str, exceptions=None, preserve_acronym_case=True) -> str
 
     return "_".join(result)
 
-def standardize_column_names_to_pascal_case(df, exceptions=None, preserve_acronym_case=True):
+def standardize_column_names_to_pascal_case(df):
     """
-    Apply PascalCase formatting to all column names in a Spark DataFrame.
+    Converts all column names in a Spark DataFrame to PascalCase,
+    preserving subwords already in PascalCase.
 
     Parameters:
-    ----------
+    -----------
     df : pyspark.sql.DataFrame
-        The input DataFrame.
-    exceptions : list of str, optional
-        List of acronyms to preserve in full uppercase (e.g., ['ID', 'SKU']).
-    preserve_acronym_case : bool, default=True
-        Whether to keep acronyms in full uppercase.
 
     Returns:
-    -------
+    --------
     pyspark.sql.DataFrame
-        DataFrame with renamed columns in PascalCase.
+        DataFrame with PascalCase column names.
     """
-    cols = [to_pascal_case(c, exceptions, preserve_acronym_case) for c in df.columns]
-    return df.toDF(*cols)
-
+    new_names = [to_pascal_case_respecting_existing(c) for c in df.columns]
+    return df.toDF(*new_names)
 
 def standardize_column_names_to_snake_case(df, exceptions=None, preserve_acronym_case=True):
     """
