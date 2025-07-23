@@ -47,48 +47,29 @@ def to_pascal_case_respecting_existing(name: str) -> str:
     return ''.join(result)
 
 
+import re
 
-def to_snake_case(name: str, exceptions=None, preserve_acronym_case=True) -> str:
-    """
-    Convert a column name to snake_case.
+def to_snake_case(column_name: str) -> str:
+    # Remove leading/trailing whitespace
+    name = column_name.strip()
 
-    This function handles various formats such as camelCase, PascalCase, kebab-case, 
-    names with dots, spaces, or underscores. It ensures consistent casing and delimiter.
+    # Replace spaces and hyphens with underscores
+    name = re.sub(r"[ \-]+", "_", name)
 
-    Parameters:
-    ----------
-    name : str
-        The original column name.
-    exceptions : list of str, optional
-        List of acronyms or terms (e.g., ['ID', 'SKU']) that should be treated specially.
-    preserve_acronym_case : bool, default=True
-        If True, exceptions will remain uppercase (e.g., 'SKU'),
-        otherwise they will be converted to lowercase ('sku').
+    # Handle camelCase and PascalCase to snake_case
+    name = re.sub(r"(.)([A-Z][a-z]+)", r"\1_\2", name)
+    name = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", name)
 
-    Returns:
-    -------
-    str
-        The column name converted to snake_case.
-    """
-    if exceptions is None:
-        exceptions = []
+    # Remove double underscores from previous steps
+    name = re.sub(r"__+", "_", name)
 
-    name = re.sub(r"[.\-_\s]+", " ", name)
-    name = re.sub(r"([a-z0-9])([A-Z])", r"\1 \2", name)
+    # Convert to lowercase
+    name = name.lower()
 
-    words = re.split(r"\s+", name.strip())
+    return name
 
-    result = []
-    for word in words:
-        if not word:
-            continue
-        if word.upper() in exceptions:
-            cleaned = word.upper() if preserve_acronym_case else word.lower()
-            result.append(cleaned)
-        else:
-            result.append(word.lower())
 
-    return "_".join(result)
+
 
 def standardize_column_names_to_pascal_case(df):
     """
@@ -107,23 +88,6 @@ def standardize_column_names_to_pascal_case(df):
     new_names = [to_pascal_case_respecting_existing(c) for c in df.columns]
     return df.toDF(*new_names)
 
-def standardize_column_names_to_snake_case(df, exceptions=None, preserve_acronym_case=True):
-    """
-    Apply snake_case formatting to all column names in a Spark DataFrame.
-
-    Parameters:
-    ----------
-    df : pyspark.sql.DataFrame
-        The input DataFrame.
-    exceptions : list of str, optional
-        List of acronyms to preserve in full uppercase or lowercase.
-    preserve_acronym_case : bool, default=True
-        Whether to preserve acronyms in uppercase ('ID') or convert to lowercase ('id').
-
-    Returns:
-    -------
-    pyspark.sql.DataFrame
-        DataFrame with renamed columns in snake_case.
-    """
-    cols = [to_snake_case(c, exceptions, preserve_acronym_case) for c in df.columns]
-    return df.toDF(*cols)
+def standardize_columns_names_to_snake_case(df):
+    renamed_cols = [to_snake_case(col) for col in df.columns]
+    return df.toDF(*renamed_cols)
