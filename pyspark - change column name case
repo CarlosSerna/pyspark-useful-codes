@@ -47,26 +47,74 @@ def to_pascal_case_respecting_existing(name: str) -> str:
     return ''.join(result)
 
 
-import re
 
 def to_snake_case(column_name: str) -> str:
-    # Remove leading/trailing whitespace
+    """
+    Convert a column name from any naming style (PascalCase, camelCase, Title Case, 
+    snake_case, mixed) to snake_case.
+
+    Parameters:
+    ----------
+    column_name : str
+        The original column name in any format.
+
+    Returns:
+    -------
+    str
+        The standardized column name in snake_case format.
+    """
+    # Remove leading and trailing whitespace
     name = column_name.strip()
 
     # Replace spaces and hyphens with underscores
     name = re.sub(r"[ \-]+", "_", name)
 
-    # Handle camelCase and PascalCase to snake_case
+    # Handle transitions from lower/number to upper case (e.g., 'customerName' → 'customer_Name')
     name = re.sub(r"(.)([A-Z][a-z]+)", r"\1_\2", name)
+
+    # Handle transitions from lower/number to capital letters (e.g., 'customerID' → 'customer_ID')
     name = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", name)
 
-    # Remove double underscores from previous steps
+    # Collapse multiple underscores into one
     name = re.sub(r"__+", "_", name)
 
-    # Convert to lowercase
-    name = name.lower()
+    # Convert to all lowercase
+    return name.lower()
 
-    return name
+
+
+def to_title_case(column_name: str) -> str:
+    """
+    Convert a column name from any naming style (PascalCase, camelCase, snake_case, 
+    Title Case, mixed) into human-friendly Title Case with spaces.
+
+    Parameters:
+    ----------
+    column_name : str
+        The original column name in any format.
+
+    Returns:
+    -------
+    str
+        A cleaned, human-readable column name in Title Case (e.g., 'Customer Name').
+    """
+    # Remove leading and trailing whitespace
+    name = column_name.strip()
+
+    # Replace underscores and hyphens with spaces
+    name = re.sub(r"[_\-]+", " ", name)
+
+    # Add space before capital letters that follow a lowercase or number
+    name = re.sub(r"(.)([A-Z][a-z]+)", r"\1 \2", name)
+
+    # Add space before capital letters that follow lowercase or numbers (e.g., 'XIDCode' → 'X ID Code')
+    name = re.sub(r"([a-z0-9])([A-Z])", r"\1 \2", name)
+
+    # Normalize multiple spaces to a single space
+    name = re.sub(r"\s+", " ", name)
+
+    # Capitalize each word
+    return name.title()
 
 
 
@@ -88,6 +136,10 @@ def standardize_column_names_to_pascal_case(df):
     new_names = [to_pascal_case_respecting_existing(c) for c in df.columns]
     return df.toDF(*new_names)
 
-def standardize_columns_names_to_snake_case(df):
+def standardize_column_names_to_snake_case(df):
     renamed_cols = [to_snake_case(col) for col in df.columns]
     return df.toDF(*renamed_cols)
+
+def standardize_column_names_to_title_case(df):
+    new_cols = [to_title_case(col) for col in df.columns]
+    return df.toDF(*new_cols)
