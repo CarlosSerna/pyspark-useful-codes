@@ -1,48 +1,52 @@
 import re
 
-import re
 
-def to_pascal_case(name: str, exceptions=None, preserve_acronym_case=True) -> str:
+def to_pascal_case_respecting_existing(name: str) -> str:
     """
-    Converts a string to PascalCase while preserving:
-    - Acronyms like 'ID', 'SKU' if included in `exceptions`
-    - Words that are already in PascalCase
+    Converts a column name to PascalCase, preserving words that are already PascalCase.
 
-    Parameters
-    ----------
+    Examples:
+    ---------
+    'x_account_id' → 'XAccountId'
+    'cpu_cores' → 'CpuCores'
+    'X_AccountId' → 'XAccountId'
+    'X_BilledCostInUsd' → 'XBilledCostInUsd'
+    'XAccountId' → 'XAccountId' (preserved as-is)
+
+    Parameters:
+    -----------
     name : str
-        Original column name
-    exceptions : list of str, optional
-        List of acronyms to preserve (e.g., ['ID', 'SKU'])
-    preserve_acronym_case : bool, default=True
-        Whether acronyms should remain uppercase
+        Input column name with any format.
 
-    Returns
-    -------
+    Returns:
+    --------
     str
-        PascalCase column name
+        Column name converted to PascalCase, respecting existing casing of subwords.
     """
-    if exceptions is None:
-        exceptions = []
+    # Step 1: If already PascalCase and has no delimiters, return as-is
+    if re.fullmatch(r'[A-Z][a-zA-Z0-9]*', name) and not any(sep in name for sep in ['_', '-', '.', ' ']):
+        return name
 
-    # Check if it's already PascalCase and all acronyms are intact
-    if re.fullmatch(r"[A-Z][a-zA-Z0-9]*", name) and not any(sep in name for sep in ['_', '-', '.', ' ']):
-        return name  # Already looks good
-
-    # Normalize separators to space
+    # Step 2: Normalize all separators to space
     name = re.sub(r"[.\-_\s]+", " ", name)
+
+    # Step 3: Split by space and preserve casing if already PascalCase
     words = re.split(r"\s+", name.strip())
 
     result = []
     for word in words:
         if not word:
             continue
-        if word.upper() in exceptions:
-            result.append(word.upper() if preserve_acronym_case else word.capitalize())
+        # If already PascalCase, keep it
+        if re.fullmatch(r'[A-Z][a-z0-9]+(?:[A-Z][a-z0-9]+)*', word):
+            result.append(word)
         else:
+            # Otherwise capitalize
             result.append(word.capitalize())
 
     return ''.join(result)
+
+
 
 def to_snake_case(name: str, exceptions=None, preserve_acronym_case=True) -> str:
     """
