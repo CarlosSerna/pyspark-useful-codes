@@ -1,0 +1,38 @@
+from pyspark.sql import DataFrame
+
+def read_all_parquet_recursively(base_path: str) -> DataFrame:
+    """
+    Recursively searches for Parquet files under the given base path and reads them into a single DataFrame.
+    
+    Parameters:
+    base_path (str): The root ABFS path to start the search (e.g., 'abfss://container@storageaccount.dfs.core.windows.net/folder')
+    
+    Returns:
+    DataFrame: A Spark DataFrame containing all Parquet data found.
+    """
+    from pyspark.sql import SparkSession
+    from typing import List
+    import re
+
+    spark = SparkSession.getActiveSession()
+    
+    def get_all_parquet_paths(path: str) -> List[str]:
+        parquet_paths = []
+        items = dbutils.fs.ls(path)
+        for item in items:
+            if item.isDir():
+                parquet_paths.extend(get_all_parquet_paths(item.path))
+            elif item.path.endswith(".parquet"):
+                parquet_paths.append(item.path)
+        return parquet_paths
+
+    parquet_files = get_all_parquet_paths(base_path)
+    
+    if not parquet_files:
+        raise FileNotFoundError(f"No Parquet files found under {base_path}")
+    
+    return spark.read.parquet(*parquet_files)
+
+df = read_all_parquet_recursively("abfss://mycontainer@mystorageaccount.dfs.core.windows.net/myfolder/")
+df.show()
+
